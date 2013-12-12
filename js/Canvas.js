@@ -1,4 +1,4 @@
-define(['main'], function(main) {
+define(['main', 'FileSaver'], function(main) {
 	//var dispCanvas = document.getElementById('canvas');
 	//var dispContext = dispCanvas.getContext('2d');
 	
@@ -10,7 +10,7 @@ define(['main'], function(main) {
 	context.scale(canvas.width/imgDim.w, canvas.h/imgDim.h);
 	//context.scale(0.4, 0.4);
 	var broadieImg = new Image();
-	broadieImg.src = "img/broadie_scaledup.png";
+	broadieImg.src = "img/broadie_scaledup_with_hoskins_household.png";
 	broadieImg.onload = function() {
 		var img_px = { w:broadieImg.width, h:broadieImg.height };
 		var img_cm = { w:21, h:29.7 };
@@ -22,10 +22,10 @@ define(['main'], function(main) {
 			return cm / ratio;
 		};
 		
-		var hands = 8;
+		var hands = 9;
 		
 		console.log("6 hands " + (hands*6));
-		var centreCm = cmForIn(0.198);
+		var centreCm = 0.5;
 		var remainderH = img_cm.w - (hands*6);
 		var remainderV = img_cm.h - (hands*2);
 		var paddingH = (remainderH / 4);
@@ -58,7 +58,7 @@ define(['main'], function(main) {
 			context.fill();
 			context.closePath();
 			context.stroke();
-			
+			/*
 			context.beginPath();
 			context.strokeStyle = "#ffffff";
 			for (var i=0; i<t/2; i++) {
@@ -75,7 +75,7 @@ define(['main'], function(main) {
 			}
 			context.closePath();
 			context.stroke();
-
+			*/
 		};
 		
 		var halfPi = Math.PI / 2;
@@ -102,43 +102,59 @@ define(['main'], function(main) {
 		};
 		
 		fillCentre(clockCentre, 5);
-		//fillCentre(thermCentre);
-		//fillCentre(tideCentre);
 		
-		var paintTextWithOutline = function(text, x, y) {
-			var buf = [-2, 0, 2];
+		var paintTextWithOutline = function(text, x, y, color, outline) {
 			
-			context.shadowColor = "#ffffff";
-			for (var i=0, iLen=buf.length; i<iLen; i++) {
-				for (var j=0, jLen=buf.length; j<jLen; j++) {
-					var sx = buf[i];
-					var sy = buf[j];
-					context.shadowOffsetX = sx;
-					context.shadowOffsetY = sy;
-					context.fillText("" + num, x, y);
+			console.log(text + " (" + x + ", " + y + ")");
+			outline = outline||2;
+			
+			context.fillStyle = "#ffffff";
+			for (var i=-(outline), iLen=(outline); i<iLen; i++) {
+				for (var j=-(outline), jLen=(outline); j<jLen; j++) {
+					context.fillText(text, x + i, y + j);
 				}
 			}
+			
+			context.fillStyle = "#000000";
+			var black = 2;
+			for (var i=-black, iLen=black; i<iLen; i++) {
+				for (var j=-black, jLen=black; j<jLen; j++) {
+					context.fillText(text, x + i, y + j);
+				}
+			}
+			
+			context.fillStyle=color;
+			context.fillText(text, x, y);
 		};
 		
 		var twelfth = twoPi / 12;
+		
+		var fontPx = 120;
+		context.font = fontPx + "px Futura";
+		context.textAlign = "center";
+
 		for (var i=0; i<12; i++) {
 			var num = i+1;
 			var angle = twelfth * num;
 			var normalised = to12OClock(angle);
-			var c = fromPolar((8*hands/7), normalised);
+			var c = fromPolar(hands, normalised);
 			var x = pxForCm(clockCentre.x + c.x);
 			var y = pxForCm(clockCentre.y + c.y);
 			
-			context.font = "45px Futura";
-			context.textAlign = "center";
-			context.fillStyle = "#0";
-			context.strokeStyle = "#ffffff";
-
-			paintTextWithOutline("" + num, x, y + 13);
+			paintTextWithOutline("" + num, x, y + (fontPx / 2), "#000000", 8);
 		}
+		context.font = "75px Futura";
+		paintTextWithOutline("HIGH TIDE", pxForCm(clockCentre.x), pxForCm(clockCentre.y - (hands*(2/3))), "#07b7e8", 8);
+		paintTextWithOutline("LOW TIDE", pxForCm(clockCentre.x), pxForCm(clockCentre.y + (hands*(2/3))), "#07b7e8", 8);
 		
 		//var imgData=context.getImageData(0, 0, canvas.width, canvas.height);
 		//dispContext.putImageData(imgData, 0, 0);
 	};
+	
+	ext.saveClicked = function() { 
+		canvas.toBlob(function(blob) {
+		    saveAs(blob, "withclock.png");
+		});
+	};
+	
 });
-		
